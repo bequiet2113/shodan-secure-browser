@@ -1,0 +1,29 @@
+{
+  "name": "shodanbrwrs",
+  "version": "1.0.0",
+  "description": "Secure Shodan Browser",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --dir"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.shodan.securebrowser",
+    "productName": "ShodanSecureBrowser",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "dir"
+    }
+  }
+}

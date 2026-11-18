@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Shodan.io Browser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0a;
+      color: #00ff41;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #tab-bar {
+      display: flex;
+      background: #141414;
+      border-bottom: 1px solid #333;
+      height: 34px;
+      align-items: center;
+      padding: 0 10px;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      background: #1f1f1f;
+      color: #888;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #2a2a2a;
+      max-width: 220px;
+      white-space: nowrap;
+    }
+    .tab.active {
+      background: #0a0a0a;
+      color: #00ff41;
+      border-color: #00ff41;
+    }
+    .tab-close {
+      font-weight: bold;
+      color: #ff3333;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .tab-close:hover {
+      background: #ff3333;
+      color: #000;
+    }
+    #views-container {
+      flex: 1;
+      position: relative;
+      background: #fff;
+    }
+    webview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+    }
+    webview.active {
+      display: flex;
+    }
+    #terminal {
+      background: #0d0d0d;
+      border-top: 1px solid #00ff41;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    #status-log {
+      font-size: 12px;
+      color: #00ff41;
+      min-height: 16px;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    .prompt-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #cmd-input {
+      background: transparent;
+      border: none;
+      color: #00ff41;
+      font-family: inherit;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="tab-bar"></div>
+  <div id="views-container"></div>
+
+  <div id="terminal">
+    <div id="status-log">[SECURE-SYS] Tryb szyfrowanej izolacji i anty-fingerprinting aktywny. Wpisz 'help'.</div>
+    <div class="prompt-line">
+      <span>root@shodan-sec:~#</span>
+      <input type="text" id="cmd-input" placeholder="Wpisz komendę..." autofocus />
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
