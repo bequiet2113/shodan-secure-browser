@@ -10,6 +10,9 @@ let activeTabId = null;
 let isRoot = false;
 let historyLog = [];
 
+// Odczyt zapisanego autostartu z LocalStorage
+let customAutostarts = JSON.parse(localStorage.getItem('shodan_autostarts') || '[]');
+
 function log(msg, isError = false) {
   statusLog.style.color = isError ? '#ff3333' : '#00ff41';
   statusLog.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -19,6 +22,10 @@ function isAllowedDomain(url) {
   if (isRoot) return true;
   try {
     const parsed = new URL(url);
+    // Zezwalaj też na domeny skonfigurowane w autostarcie, jeśli jesteś w trybie standardowym
+    if (customAutostarts.includes(parsed.href) || customAutostarts.includes(parsed.hostname)) {
+      return true;
+    }
     return parsed.hostname === 'shodan.io' || parsed.hostname.endsWith('.shodan.io');
   } catch {
     return false;
@@ -38,7 +45,7 @@ function createTab(url = 'https://www.shodan.io', bypassRestriction = false) {
     return;
   }
 
-  const id = 'tab_' + Date.now();
+  const id = 'tab_' + Date.now() + '_' + Math.random().toString(36.2);
   historyLog.push({ time: new Date().toLocaleTimeString(), url });
 
   const tabEl = document.createElement('div');
@@ -117,7 +124,7 @@ function closeTabById(id) {
 }
 
 // Obsługa komend terminala
-cmdInput.addEventListener('keydown', (e) => {
+cmdInput.addEventListener('keydown', async (e) => {
   if (e.key !== 'Enter') return;
   const raw = cmdInput.value.trim();
   cmdInput.value = '';
@@ -126,11 +133,11 @@ cmdInput.addEventListener('keydown', (e) => {
   const parts = raw.split(' ');
   const cmd = parts[0].toLowerCase();
   const subcmd = parts[1] ? parts[1].toLowerCase() : null;
-  const args = parts.slice(2);
+  const target = parts[2] ? parts[2] : null;
 
   switch (cmd) {
     case 'help':
-      log('Komendy: sudo | sudo onc <dns/ip> | sudo exit | sudo restart | close | history | wipe | back | reload');
+      log('Komendy: sudo | sudo onc <dns/ip> | sudo ccaws <dns/ip> | sudo dcaws <dns/ip> | sudo headers <dns/ip> | sudo exit | sudo restart | close | history | wipe');
       break;
 
     case 'sudo':
@@ -138,11 +145,45 @@ cmdInput.addEventListener('keydown', (e) => {
         isRoot = true;
         log('[SUDO] Pełne uprawnienia roota aktywowane.');
       } else if (subcmd === 'onc') {
-        const target = parts[2];
         if (!target) return log('Podaj adres. Użyj: sudo onc <dns/ip>', true);
         const finalUrl = formatTargetUrl(target);
         log(`[SECURE TUNNEL] Otwieranie: ${finalUrl}`);
         createTab(finalUrl, true);
+      } else if (subcmd === 'ccaws') {
+        // Create Custom Autostart Website
+        if (!target) return log('Podaj adres. Użyj: sudo ccaws <dns/ip>', true);
+        const finalUrl = formatTargetUrl(target);
+        if (!customAutostarts.includes(finalUrl)) {
+          customAutostarts.push(finalUrl);
+          localStorage.setItem('shodan_autostarts', JSON.stringify(customAutostarts));
+          log(`[CCAWS] Dodano do autostartu: ${finalUrl}`);
+        } else {
+          log(`[CCAWS] Ten adres jest już w autostarcie.`, true);
+        }
+      } else if (subcmd === 'dcaws') {
+        // Delete Custom Autostart Website
+        if (!target) return log('Podaj adres lub domenę do usunięcia z autostartu.', true);
+        const initialLen = customAutostarts.length;
+        customAutostarts = customAutostarts.filter(url => !url.includes(target));
+        if (customAutostarts.length < initialLen) {
+          localStorage.setItem('shodan_autostarts', JSON.stringify(customAutostarts));
+          log(`[DCAWS] Usunięto pasujące wpisy z autostartu.`);
+        } else {
+          log(`[DCAWS] Nie znaleziono takiego adresu w autostarcie.`, true);
+        }
+      } else if (subcmd === 'headers') {
+        // Dodatkowa funkcja hakerska: Szybki podgląd nagłówków HTTP strony
+        if (!target) return log('Podaj adres. Użyj: sudo headers <dns/ip>', true);
+        const finalUrl = formatTargetUrl(target);
+        log(`[HEADERS] Pobieranie nagłówków dla ${finalUrl}...`);
+        try {
+          const response = await fetch(finalUrl, { method: 'HEAD', mode: 'no-cors' });
+          log(`[HEADERS] Sukces połączenia z ${target} (Tryb zabezpieczony CORS).`);
+          createTab(finalUrl, true);
+        } catch (err) {
+          log(`[HEADERS] Awaria / Ograniczenie CORS dla ${target}. Otwieram w karcie.`, true);
+          createTab(finalUrl, true);
+        }
       } else if (subcmd === 'exit') {
         log('[SUDO] Awaryjne zamknięcie systemu...');
         setTimeout(() => ipcRenderer.send('app-exit'), 500);
@@ -191,4 +232,16 @@ cmdInput.addEventListener('keydown', (e) => {
   }
 });
 
+// --- INICJALIZACJA STARTOWA ---
+// 1. Zawsze otwórz Shodan.io na start
 createTab('https://www.shodan.io');
+
+// 2. Automatycznie otwórz wszystkie strony z zapisanego autostartu (CCAWS)
+if (customAutostarts.length > 0) {
+  setTimeout(() => {
+    customAutostarts.forEach(url => {
+      createTab(url, true);
+    });
+    log(`[AUTOKAP] Załadowano ${customAutostarts.length} stron(y) z autostartu.`);
+  }, 600);
+}

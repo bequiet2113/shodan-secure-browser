@@ -29,13 +29,11 @@ function createWindow() {
 app.whenReady().then(() => {
   let mainWindow = createWindow();
 
-  // Nasłuch komendy restartu z terminala
   ipcMain.on('app-restart', () => {
     mainWindow.close();
     mainWindow = createWindow();
   });
 
-  // Nasłuch komendy wyjścia z terminala
   ipcMain.on('app-exit', () => {
     app.quit();
   });

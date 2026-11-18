@@ -1,11 +1,11 @@
 {
   "name": "shodanbrwrs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Secure Shodan Browser",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win --dir"
+    "build:win": "electron-builder --win"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +23,7 @@
       "output": "dist"
     },
     "win": {
-      "target": "dir"
+      "target": "nsis"
     }
   }
 }
